@@ -42,6 +42,7 @@ async def show_team(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text("The team is empty.")
 
 def main() -> None:
+print("Loaded token:")
     """Start the bot."""
     # Replace 'YOUR_TOKEN' with your actual bot token
  print("Loaded token:", "✔️" if TOKEN else "❌")
