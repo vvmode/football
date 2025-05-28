@@ -45,7 +45,7 @@ def main() -> None:
     print("Loaded token:")
     """Start the bot."""
     # Replace 'YOUR_TOKEN' with your actual bot token
-     print("Loaded token:", "✔️" if TOKEN else "❌")
+    print("Loaded token:", "✔️" if TOKEN else "❌")
     
     application = ApplicationBuilder().token(TOKEN).build()
 
