@@ -1,60 +1,59 @@
 import os
 from dotenv import load_dotenv
-from telegram.ext import Application
-from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
-# Load .env file
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, CallbackQueryHandler
+
+# Load token
 load_dotenv()
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-
 if not TOKEN:
-    raise ValueError("TELEGRAM_BOT_TOKEN is not set. Please check your .env file or Render environment variables.")
+    raise ValueError("TELEGRAM_BOT_TOKEN is not set.")
 
-# Store team members in a dictionary
+# Team member storage
 team_members = {}
 
-async def add_member(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Adds a user to the team list."""
-    user_id = update.effective_user.id
-    username = update.effective_user.username
-    if username:
-        team_members[user_id] = username
-        await update.message.reply_text(f"@{username} added to the team!")
-    else:
-         await update.message.reply_text("Please set a username in Telegram to be added to the team.")
+# Show the menu with buttons
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    keyboard = [
+        [InlineKeyboardButton("➕ Add Me", callback_data="add")],
+        [InlineKeyboardButton("➖ Remove Me", callback_data="remove")],
+        [InlineKeyboardButton("👥 Show Team", callback_data="team")],
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text("Choose an action:", reply_markup=reply_markup)
 
-async def remove_member(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Removes a user from the team list."""
-    user_id = update.effective_user.id
-    username = update.effective_user.username
-    if user_id in team_members:
-        del team_members[user_id]
-        await update.message.reply_text(f"@{username} removed from the team!")
-    else:
-        await update.message.reply_text(f"@{username} is not in the team.")
+# Handle button press
+async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    await query.answer()
 
-async def show_team(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Shows the current team list."""
-    if team_members:
-        team_list = "\n".join([f"@{username}" for username in team_members.values()])
-        await update.message.reply_text(f"Current team:\n{team_list}")
-    else:
-        await update.message.reply_text("The team is empty.")
+    user_id = query.from_user.id
+    username = query.from_user.username
 
+    if query.data == "add":
+        if username:
+            team_members[user_id] = username
+            await query.edit_message_text(f"@{username} added to the team!")
+        else:
+            await query.edit_message_text("Please set a username in Telegram to be added.")
+    elif query.data == "remove":
+        if user_id in team_members:
+            del team_members[user_id]
+            await query.edit_message_text(f"@{username} removed from the team!")
+        else:
+            await query.edit_message_text(f"@{username} is not in the team.")
+    elif query.data == "team":
+        if team_members:
+            team_list = "\n".join([f"@{u}" for u in team_members.values()])
+            await query.edit_message_text(f"Current team:\n{team_list}")
+        else:
+            await query.edit_message_text("The team is empty.")
+
+# Main bot function
 def main() -> None:
-    print("Loaded token:")
-    """Start the bot."""
-    # Replace 'YOUR_TOKEN' with your actual bot token
-    print("Loaded token:", "✔️" if TOKEN else "❌")
-    
     application = ApplicationBuilder().token(TOKEN).build()
-
-    # Add command handlers
-    application.add_handler(CommandHandler("add", add_member))
-    application.add_handler(CommandHandler("remove", remove_member))
-    application.add_handler(CommandHandler("team", show_team))
-
-    # Run the bot
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CallbackQueryHandler(handle_button))
     application.run_polling()
 
 if __name__ == "__main__":
