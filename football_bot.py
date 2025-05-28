@@ -12,14 +12,25 @@ if not TOKEN:
 # Team member storage
 team_members = {}
 
-# Show the menu with buttons
+# Generate menu based on user state
+def generate_menu(user_id):
+    if user_id in team_members:
+        # Show remove + show team
+        return InlineKeyboardMarkup([
+            [InlineKeyboardButton("➖ Remove Me", callback_data="remove")],
+            [InlineKeyboardButton("👥 Show Team", callback_data="team")],
+        ])
+    else:
+        # Show add + show team
+        return InlineKeyboardMarkup([
+            [InlineKeyboardButton("➕ Add Me", callback_data="add")],
+            [InlineKeyboardButton("👥 Show Team", callback_data="team")],
+        ])
+
+# /start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    keyboard = [
-        [InlineKeyboardButton("➕ Add Me", callback_data="add")],
-        [InlineKeyboardButton("➖ Remove Me", callback_data="remove")],
-        [InlineKeyboardButton("👥 Show Team", callback_data="team")],
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    user_id = update.effective_user.id
+    reply_markup = generate_menu(user_id)
     await update.message.reply_text("Choose an action:", reply_markup=reply_markup)
 
 # Handle button press
@@ -33,23 +44,49 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     if query.data == "add":
         if username:
             team_members[user_id] = username
-            await query.edit_message_text(f"@{username} added to the team!")
+            reply_markup = generate_menu(user_id)
+            await query.edit_message_text(
+                f"@{username} added to the team!", reply_markup=reply_markup
+            )
         else:
             await query.edit_message_text("Please set a username in Telegram to be added.")
+
     elif query.data == "remove":
         if user_id in team_members:
             del team_members[user_id]
-            await query.edit_message_text(f"@{username} removed from the team!")
+            reply_markup = generate_menu(user_id)
+            await query.edit_message_text(
+                f"@{username} removed from the team!", reply_markup=reply_markup
+            )
         else:
-            await query.edit_message_text(f"@{username} is not in the team.")
+            reply_markup = generate_menu(user_id)
+            await query.edit_message_text(
+                f"@{username} is not in the team.", reply_markup=reply_markup
+            )
+
     elif query.data == "team":
         if team_members:
-            team_list = "\n".join([f"@{u}" for u in team_members.values()])
-            await query.edit_message_text(f"Current team:\n{team_list}")
+            team_list = "\n".join([f"• @{u}" for u in team_members.values()])
+            text = f"👥 <b>Current Team Members</b>:\n{team_list}"
         else:
-            await query.edit_message_text("The team is empty.")
+            text = "👥 <b>The team is currently empty.</b>"
 
-# Main bot function
+        # Add correct follow-up button
+        if user_id in team_members:
+            followup_button = [InlineKeyboardButton("➖ Remove Me", callback_data="remove")]
+        else:
+            followup_button = [InlineKeyboardButton("➕ Add Me", callback_data="add")]
+
+        followup_button.append(InlineKeyboardButton("⬅️ Back", callback_data="back"))
+
+        reply_markup = InlineKeyboardMarkup([followup_button])
+        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="HTML")
+
+    elif query.data == "back":
+        reply_markup = generate_menu(user_id)
+        await query.edit_message_text("Choose an action:", reply_markup=reply_markup)
+
+# Main
 def main() -> None:
     application = ApplicationBuilder().token(TOKEN).build()
     application.add_handler(CommandHandler("start", start))
