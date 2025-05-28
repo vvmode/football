@@ -1,5 +1,14 @@
+import os
+from dotenv import load_dotenv
+from telegram.ext import Application
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+# Load .env file
+load_dotenv()
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+
+if not TOKEN:
+    raise ValueError("TELEGRAM_BOT_TOKEN is not set. Please check your .env file or Render environment variables.")
 
 # Store team members in a dictionary
 team_members = {}
