@@ -180,11 +180,16 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     response = ""
     buttons = None
     if query.data == "add":
-        response = team_manager.join_team(user_id, full_name, username)
+        team_manager.join_team(user_id, full_name, username)
+        response = get_team_message()
+        buttons = generate_buttons(user_id, username)
     elif query.data == "remove":
-        response = team_manager.leave_team(user_id)
+        team_manager.leave_team(user_id)
+        response = get_team_message()
+        buttons = generate_buttons(user_id, username)
     elif query.data == "team":
         response = get_team_message()
+        buttons = generate_buttons(user_id, username)
     elif query.data == "settings":
         await query.edit_message_text(
             "⚙️ <b>Event Settings</b>\nChoose what you want to configure:",
@@ -215,17 +220,17 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         else:
             await query.answer("⛔ You are not authorized.", show_alert=True)
+        return
     elif query.data == "back_to_main":
-        await query.edit_message_text(
-            get_team_message(),
-            reply_markup=generate_buttons(user_id, username),
-            parse_mode="HTML"
-        )
+        response = get_team_message()
+        buttons = generate_buttons(user_id, username)
     else:
         response = "Unknown action."
+        buttons = generate_buttons(user_id, username)
+        
+    if response:
+        await query.edit_message_text(response, reply_markup=buttons, parse_mode="HTML")
 
-    buttons = generate_buttons(user_id, username)
-    await query.edit_message_text(response, reply_markup=buttons, parse_mode="HTML")
 
 # === Uvicorn entrypoint ===
 if __name__ == "__main__":
