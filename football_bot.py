@@ -93,7 +93,7 @@ def generate_buttons(user_id, username):
 
     buttons.append([InlineKeyboardButton("👥 Show Team", callback_data="team")])
 
-    if manager.is_admin(user_id=user_id, username=username):
+    if team_manager.is_admin(user_id=user_id, username=username):
         buttons.append([InlineKeyboardButton("⚙️ Settings", callback_data="settings")])
 
     return InlineKeyboardMarkup(buttons)
@@ -152,14 +152,14 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     value = update.message.text.strip()
 
     if field == "event_date":
-        manager.event_date = value
+        team_manager.event_date = value
         await update.message.reply_text(f"✅ Event date set to: {value}")
     elif field == "venue":
-        manager.venue = value
+        team_manager.venue = value
         await update.message.reply_text(f"✅ Venue set to: {value}")
     elif field == "max_players":
         try:
-            manager.max_players = int(value)
+            team_manager.max_players = int(value)
             await update.message.reply_text(f"✅ Max players set to: {value}")
         except ValueError:
             await update.message.reply_text("❌ Please enter a valid number.")
@@ -211,7 +211,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         response = "Unknown action."
 
-    buttons = generate_buttons(user_id)
+    buttons = generate_buttons(user_id, username)
     await query.edit_message_text(response, reply_markup=buttons, parse_mode="HTML")
 
 # === Uvicorn entrypoint ===
