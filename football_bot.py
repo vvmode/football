@@ -98,7 +98,8 @@ def main():
     telegram_app.add_handler(CommandHandler("start", start))
     telegram_app.add_handler(CallbackQueryHandler(handle_button))
 
-
+ # Run Flask (health check) on separate port
+    threading.Thread(target=lambda: flask_app.run(host="0.0.0.0", port=5000)).start()
     # Start webhook listener to receive updates from Telegram
     telegram_app.run_webhook(
         listen="0.0.0.0",
