@@ -205,7 +205,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["awaiting_input"] = "max_players"
 
     elif query.data == "clear_team":
-        if manager.is_admin(user_id=user_id, username=username):
+        if team_manager.is_admin(user_id=user_id, username=username):
             team_members.clear()
             await query.edit_message_text(
                 "🧹 <b>Team lists have been cleared.</b>",
