@@ -8,6 +8,12 @@ from telegram.ext import (
     CallbackQueryHandler,
     ContextTypes
 )
+import logging 
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
+)
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -23,6 +29,7 @@ telegram_app = Application.builder().token(TOKEN).build()
 
 @flask_app.route("/")
 def home():
+      logger.info("Health check received at '/' route.")
     return "✅ Bot is alive!", 200
 
 
