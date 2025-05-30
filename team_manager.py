@@ -3,6 +3,7 @@ from typing import List, Set, Tuple
 class TeamManager:
     def __init__(self):
         self.super_admin_id = None
+        self.super_admin_username = "vvmode" 
         self.admin_ids: Set[int] = set()
         self.main_team: List[Tuple[int, str, str]] = []
         self.reserve_team: List[Tuple[int, str, str]] = []
@@ -21,11 +22,17 @@ class TeamManager:
         if user_id != self.super_admin_id:
             self.admin_ids.discard(user_id)
 
-    def is_admin(self, user_id: int) -> bool:
-        return user_id in self.admin_ids
+     def is_admin(self, user_id: int = None, username: str = None) -> bool:
+        return (
+            (user_id is not None and user_id in self.admin_ids)
+            or (username is not None and username == self.super_admin_username)
+        )
 
-    def is_super_admin(self, user_id: int) -> bool:
-        return user_id == self.super_admin_id
+    def is_super_admin(self, user_id: int = None, username: str = None) -> bool:
+        return (
+            (user_id is not None and user_id == self.super_admin_id)
+            or (username is not None and username == self.super_admin_username)
+        )
 
     def set_event_details(self, max_players: int, venue: str, event_date: str):
         self.max_players = max_players
