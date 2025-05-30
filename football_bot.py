@@ -68,11 +68,14 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     else:
         text = "👥 <b>The team is currently empty.</b>"
 
-    # Only one button (Add or Remove)
-    next_action = InlineKeyboardButton("➖ Remove Me", callback_data="remove") if user_id in team_members \
+    # Buttons: Add or Remove, plus Show Team
+    main_action = InlineKeyboardButton("➖ Remove Me", callback_data="remove") if user_id in team_members \
                   else InlineKeyboardButton("➕ Add Me", callback_data="add")
 
-    markup = InlineKeyboardMarkup([[next_action]])
+    markup = InlineKeyboardMarkup([
+        [main_action],
+        [InlineKeyboardButton("👥 Show Team", callback_data="team")]
+    ])
 
     await query.edit_message_text(text, reply_markup=markup, parse_mode="HTML")
 
