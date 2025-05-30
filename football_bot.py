@@ -100,7 +100,12 @@ def main():
 
     threading.Thread(target=lambda: flask_app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))).start()
 
-    telegram_app.run_polling()  # required to process webhook updates
+    # Start webhook listener to receive updates from Telegram
+    telegram_app.run_webhook(
+        listen="0.0.0.0",
+        port=int(os.environ.get("PORT", 10000)),
+        webhook_url=f"{WEBHOOK_URL}/webhook"
+    )
 
 if __name__ == "__main__":
     main()
