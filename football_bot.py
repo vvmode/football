@@ -1,19 +1,18 @@
 import os
-import threading
 from dotenv import load_dotenv
 from flask import Flask, request
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application,
-    ContextTypes,
     CommandHandler,
     CallbackQueryHandler,
+    ContextTypes
 )
 
 load_dotenv()
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # https://your-bot.onrender.com
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # e.g., https://your-bot.onrender.com
 
 team_members = {}
 
@@ -21,18 +20,18 @@ team_members = {}
 flask_app = Flask(__name__)
 telegram_app = Application.builder().token(TOKEN).build()
 
+
 @flask_app.route("/")
 def home():
-    return "Bot is alive!", 200
+    return "✅ Bot is alive!", 200
 
-def start_flask():
-    flask_app.run(host="0.0.0.0", port=5001, debug=False, use_reloader=False)
-    
+
 @flask_app.route("/webhook", methods=["POST"])
 def webhook():
     update = Update.de_json(request.get_json(force=True), telegram_app.bot)
     telegram_app.update_queue.put_nowait(update)
     return "OK", 200
+
 
 # === Helper functions ===
 def get_team_message():
@@ -40,6 +39,7 @@ def get_team_message():
         members = "\n".join(f"• @{u}" for u in team_members.values())
         return f"👥 <b>Current Team Members</b>:\n{members}"
     return "👥 <b>The team is currently empty.</b>"
+
 
 def generate_buttons(user_id):
     if user_id in team_members:
@@ -53,13 +53,12 @@ def generate_buttons(user_id):
             [InlineKeyboardButton("👥 Show Team", callback_data="team")]
         ])
 
+
 # === Telegram Bot Handlers ===
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.effective_user.id
-    await update.message.reply_html(
-        get_team_message(),
-        reply_markup=generate_buttons(user_id)
-    )
+    await update.message.reply_html(get_team_message(), reply_markup=generate_buttons(user_id))
+
 
 async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
@@ -72,44 +71,26 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         team_members[user_id] = username
     elif query.data == "remove":
         team_members.pop(user_id, None)
-    # "team" just refreshes the view
 
-    if query.data in ("team", "add", "remove"):
-        text = get_team_message()
+    text = get_team_message()
+    buttons = generate_buttons(user_id)
 
-        if user_id in team_members:
-            buttons = [
-                InlineKeyboardButton("➖ Remove Me", callback_data="remove"),
-                InlineKeyboardButton("👥 Show Team", callback_data="team"),
-            ]
-        else:
-            buttons = [
-                InlineKeyboardButton("➕ Add Me", callback_data="add"),
-                InlineKeyboardButton("👥 Show Team", callback_data="team"),
-            ]
+    await query.edit_message_text(text, reply_markup=buttons, parse_mode="HTML")
 
-        markup = InlineKeyboardMarkup([buttons])
-
-        await query.edit_message_text(text, reply_markup=markup, parse_mode="HTML")
-
-# === Run Flask in thread ===
-def start_flask():
-    flask_app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)
 
 # === Main Setup ===
 def main():
+    # Set handlers
     telegram_app.add_handler(CommandHandler("start", start))
     telegram_app.add_handler(CallbackQueryHandler(handle_button))
 
-    # Start Flask app (health check + webhook route)
-    threading.Thread(target=start_flask).start()
+    # Set webhook to your domain
+    telegram_app.bot.set_webhook(url=f"{WEBHOOK_URL}/webhook")
 
-    # Start telegram webhook listening on port 5000
-    telegram_app.run_webhook(
-        listen="0.0.0.0",
-        port=5000,
-        webhook_url=f"{WEBHOOK_URL}/webhook"
-    )
+    # Start Flask app to listen for webhook requests
+    flask_app.run(host="0.0.0.0", port=5000)
+
 
 if __name__ == "__main__":
+    telegram_app.initialize()  # Required to prep the app before handling updates
     main()
