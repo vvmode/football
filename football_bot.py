@@ -23,7 +23,7 @@ PORT = int(os.getenv("PORT", 10000))
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-team_members = {}
+team_members = {}  # {user_id: {"username": str, "full_name": str}}
 
 # === Telegram bot application ===
 telegram_app = Application.builder().token(TELEGRAM_TOKEN).build()
@@ -63,7 +63,9 @@ async def telegram_webhook(request: Request):
 # === Telegram Bot Handlers ===
 def get_team_message():
     if team_members:
-        members = "\n".join(f"• @{u} (telegram)" for u in team_members.values())
+        members = "\n".join(
+            f"• {info['full_name']} (@{info['username']})" for info in team_members.values()
+        )
         return f"👥 <b>Current Team Members</b>:\n{members}"
     return "👥 <b>The team is currently empty.</b>"
 
@@ -87,21 +89,20 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-
-    user_id = query.from_user.id
-    username = query.from_user.username or "anonymous"
+    user = query.from_user
+    user_id = user.id
+    username = user.username or "anonymous"
+    full_name = f"{user.first_name} {user.last_name}".strip() if user.last_name else user.first_name
 
     if query.data == "add":
-        team_members[user_id] = username
+        team_members[user_id] = {"username": username, "full_name": full_name}
     elif query.data == "remove":
         team_members.pop(user_id, None)
 
     text = get_team_message()
     buttons = generate_buttons(user_id)
+    
     await query.edit_message_text(text, reply_markup=buttons, parse_mode="HTML")
-
 
 # === Uvicorn entrypoint ===
 if __name__ == "__main__":
