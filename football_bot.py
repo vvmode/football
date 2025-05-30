@@ -55,7 +55,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.effective_user.id
     message = get_team_message()
     buttons = generate_buttons(user_id)
-    await query.edit_message_text(text, reply_markup=buttons, parse_mode="HTML")
+   await update.message.reply_html(get_team_message(), reply_markup=generate_buttons(update.effective_user.id))
 
 async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
@@ -91,20 +91,19 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
         markup = InlineKeyboardMarkup([buttons])
 
-    await query.edit_message_text(message, reply_markup=buttons, parse_mode="HTML")
+   await query.edit_message_text(text, reply_markup=markup, parse_mode="HTML")
 
 # === Main Setup ===
 def main():
     telegram_app.add_handler(CommandHandler("start", start))
     telegram_app.add_handler(CallbackQueryHandler(handle_button))
 
- # Run Flask (health check) on separate port
-    threading.Thread(target=lambda: flask_app.run(host="0.0.0.0", port=5000)).start()
-    # Start webhook listener to receive updates from Telegram
     telegram_app.run_webhook(
         listen="0.0.0.0",
         port=int(os.environ.get("PORT", 10000)),
-        webhook_url=f"{WEBHOOK_URL}/webhook"
+        webhook_url=f"{WEBHOOK_URL}/webhook",
+        route="/webhook",
+        web_app=flask_app
     )
 
 if __name__ == "__main__":
