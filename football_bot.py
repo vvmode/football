@@ -13,7 +13,7 @@ from telegram.ext import (
 load_dotenv()
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # e.g., https://your-bot.onrender.com
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # https://your-bot.onrender.com
 
 team_members = {}
 
@@ -31,7 +31,7 @@ def webhook():
     telegram_app.update_queue.put_nowait(update)
     return "OK", 200
 
-# === Helper to generate team list and buttons ===
+# === Helper functions ===
 def get_team_message():
     if team_members:
         members = "\n".join(f"• @{u}" for u in team_members.values())
@@ -53,9 +53,10 @@ def generate_buttons(user_id):
 # === Telegram Bot Handlers ===
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.effective_user.id
-    message = get_team_message()
-    buttons = generate_buttons(user_id)
-    await update.message.reply_html(get_team_message(), reply_markup=generate_buttons(update.effective_user.id))
+    await update.message.reply_html(
+        get_team_message(),
+        reply_markup=generate_buttons(user_id)
+    )
 
 async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
@@ -70,14 +71,9 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         team_members.pop(user_id, None)
     # "team" just refreshes the view
 
-    if query.data == "team" or query.data in ("add", "remove"):
-        if team_members:
-            members = "\n".join(f"• @{u}" for u in team_members.values())
-            text = f"👥 <b>Current Team Members</b>:\n{members}"
-        else:
-            text = "👥 <b>The team is currently empty.</b>"
+    if query.data in ("team", "add", "remove"):
+        text = get_team_message()
 
-        # Set the correct action button depending on user's presence
         if user_id in team_members:
             buttons = [
                 InlineKeyboardButton("➖ Remove Me", callback_data="remove"),
@@ -93,17 +89,23 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
         await query.edit_message_text(text, reply_markup=markup, parse_mode="HTML")
 
+# === Run Flask in thread ===
+def start_flask():
+    flask_app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)
+
 # === Main Setup ===
 def main():
     telegram_app.add_handler(CommandHandler("start", start))
     telegram_app.add_handler(CallbackQueryHandler(handle_button))
 
+    # Start Flask app (health check + webhook route)
+    threading.Thread(target=start_flask).start()
+
+    # Start telegram webhook listening on port 5000
     telegram_app.run_webhook(
         listen="0.0.0.0",
-        port=int(os.environ.get("PORT", 10000)),
-        webhook_url=f"{WEBHOOK_URL}/webhook",
-        route="/webhook",
-        web_app=flask_app
+        port=5000,
+        webhook_url=f"{WEBHOOK_URL}/webhook"
     )
 
 if __name__ == "__main__":
