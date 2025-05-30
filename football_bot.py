@@ -84,6 +84,7 @@ def get_team_message():
     return "👥 <b>The team is currently empty.</b>"
 
 def generate_buttons(user_id, username):
+    is_admin = manager.is_admin(user_id=user_id, username=username)
     buttons = []
 
     if user_id in team_members:
@@ -102,8 +103,9 @@ def generate_settings_buttons():
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("📅 Set Date", callback_data="set_date")],
         [InlineKeyboardButton("📍 Set Venue", callback_data="set_venue")],
-        [InlineKeyboardButton("👥 Set Max Players", callback_data="set_max_players")],
-        [InlineKeyboardButton("⬅️ Back", callback_data="back_to_main")],
+        [InlineKeyboardButton("👥 Set Max Team Size", callback_data="set_max")],
+        [InlineKeyboardButton("🧹 Clear Team Lists", callback_data="clear_team")],
+        [InlineKeyboardButton("🔙 Back", callback_data="back_to_main")]
     ])
     
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -202,6 +204,16 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("👥 Send the new max number of players (e.g., 18):", parse_mode="HTML")
         context.user_data["awaiting_input"] = "max_players"
 
+    elif query.data == "clear_team":
+        if manager.is_admin(user_id=user_id, username=username):
+            team_members.clear()
+            await query.edit_message_text(
+                "🧹 <b>Team lists have been cleared.</b>",
+                reply_markup=generate_settings_buttons(),
+                parse_mode="HTML"
+            )
+        else:
+            await query.answer("⛔ You are not authorized.", show_alert=True)
     elif query.data == "back_to_main":
         await query.edit_message_text(
             get_team_message(),
