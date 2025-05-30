@@ -22,7 +22,7 @@ class TeamManager:
         if user_id != self.super_admin_id:
             self.admin_ids.discard(user_id)
 
-     def is_admin(self, user_id: int = None, username: str = None) -> bool:
+    def is_admin(self, user_id: int = None, username: str = None) -> bool:
         return (
             (user_id is not None and user_id in self.admin_ids)
             or (username is not None and username == self.super_admin_username)
