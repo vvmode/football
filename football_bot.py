@@ -78,19 +78,17 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     await query.edit_message_text(text, reply_markup=buttons, parse_mode="HTML")
 
 
-# === Main Setup ===
 def main():
-    # Set handlers
     telegram_app.add_handler(CommandHandler("start", start))
     telegram_app.add_handler(CallbackQueryHandler(handle_button))
 
-    # Set webhook to your domain
+    telegram_app.initialize()  # IMPORTANT: Initializes the app for manual queue usage
+
+    # Set webhook URL (do this once)
     telegram_app.bot.set_webhook(url=f"{WEBHOOK_URL}/webhook")
 
-    # Start Flask app to listen for webhook requests
-    flask_app.run(host="0.0.0.0", port=5000)
-
+    # Start Flask app
+    flask_app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000))
 
 if __name__ == "__main__":
-    telegram_app.initialize()  # Required to prep the app before handling updates
     main()
