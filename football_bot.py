@@ -86,7 +86,7 @@ def generate_buttons(user_id, username):
     is_admin = team_manager.is_admin(user_id=user_id, username=username)
     buttons = []
 
-    if user_id in team_members:
+    if user_id in team_manager.main_team:
         buttons.append([InlineKeyboardButton("➖ Remove Me", callback_data="remove")])
     else:
         buttons.append([InlineKeyboardButton("➕ Add Me", callback_data="add")])
@@ -206,7 +206,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif query.data == "clear_team":
         if team_manager.is_admin(user_id=user_id, username=username):
-            team_members.clear()
+            team_manager.main_team.clear()
             team_manager.reserve_team.clear()
             await query.edit_message_text(
                 "🧹 <b>Team lists have been cleared.</b>",
