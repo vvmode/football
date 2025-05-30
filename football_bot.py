@@ -12,6 +12,7 @@ from telegram.ext import (
     ContextTypes,
 )
 from team_manager import TeamManager  # import your TeamManager class
+from telegram.ext import MessageHandler, filters
 
 load_dotenv()
 
@@ -36,6 +37,7 @@ async def lifespan(app: FastAPI):
     telegram_app.add_handler(CommandHandler("start", start))
     telegram_app.add_handler(CommandHandler("setevent", set_event))  # add setevent handler
     telegram_app.add_handler(CallbackQueryHandler(handle_button))
+    telegram_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
     await telegram_app.initialize()
     await telegram_app.bot.set_webhook(f"{WEBHOOK_URL}/webhook")
     logger.info("✅ Webhook set")
@@ -81,21 +83,39 @@ def get_team_message():
         )
     return "👥 <b>The team is currently empty.</b>"
 
-def generate_buttons(user_id):
-    if user_id in [uid for uid, _, _ in team_manager.main_team + team_manager.reserve_team]:
-        return InlineKeyboardMarkup([
-            [InlineKeyboardButton("➖ Remove Me", callback_data="remove")],
-            [InlineKeyboardButton("👥 Show Team", callback_data="team")]
-        ])
-    else:
-        return InlineKeyboardMarkup([
-            [InlineKeyboardButton("➕ Add Me", callback_data="add")],
-            [InlineKeyboardButton("👥 Show Team", callback_data="team")]
-        ])
+def generate_buttons(user_id, username):
+    buttons = []
 
+    if user_id in team_members:
+        buttons.append([InlineKeyboardButton("➖ Remove Me", callback_data="remove")])
+    else:
+        buttons.append([InlineKeyboardButton("➕ Add Me", callback_data="add")])
+
+    buttons.append([InlineKeyboardButton("👥 Show Team", callback_data="team")])
+
+    if manager.is_admin(user_id=user_id, username=username):
+        buttons.append([InlineKeyboardButton("⚙️ Settings", callback_data="settings")])
+
+    return InlineKeyboardMarkup(buttons)
+
+def generate_settings_buttons():
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("📅 Set Date", callback_data="set_date")],
+        [InlineKeyboardButton("📍 Set Venue", callback_data="set_venue")],
+        [InlineKeyboardButton("👥 Set Max Players", callback_data="set_max_players")],
+        [InlineKeyboardButton("⬅️ Back", callback_data="back_to_main")],
+    ])
+    
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    await update.message.reply_html(get_team_message(), reply_markup=generate_buttons(user_id))
+    user = update.effective_user
+    user_id = user.id
+    username = user.username or ""
+    full_name = f"{user.first_name} {user.last_name}".strip() if user.last_name else user.first_name
+
+    await update.message.reply_html(
+        get_team_message(),
+        reply_markup=generate_buttons(user_id, username)
+    )
 
 async def set_event(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -124,6 +144,31 @@ async def set_event(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"✅ Event updated:\nMax Players: {max_players}\nVenue: {venue}\nDate: {event_date}"
     )
 
+async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if "awaiting_input" not in context.user_data:
+        return
+
+    field = context.user_data.pop("awaiting_input")
+    value = update.message.text.strip()
+
+    if field == "event_date":
+        manager.event_date = value
+        await update.message.reply_text(f"✅ Event date set to: {value}")
+    elif field == "venue":
+        manager.venue = value
+        await update.message.reply_text(f"✅ Venue set to: {value}")
+    elif field == "max_players":
+        try:
+            manager.max_players = int(value)
+            await update.message.reply_text(f"✅ Max players set to: {value}")
+        except ValueError:
+            await update.message.reply_text("❌ Please enter a valid number.")
+
+    await update.message.reply_html(
+        get_team_message(),
+        reply_markup=generate_buttons(update.effective_user.id, update.effective_user.username)
+    )
+    
 async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -138,6 +183,31 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         response = team_manager.leave_team(user_id)
     elif query.data == "team":
         response = get_team_message()
+    elif query.data == "settings":
+        await query.edit_message_text(
+            "⚙️ <b>Event Settings</b>\nChoose what you want to configure:",
+            reply_markup=generate_settings_buttons(),
+            parse_mode="HTML"
+        )
+
+    elif query.data == "set_date":
+        await query.edit_message_text("📅 Send me the new event date (e.g., 2025-06-01):", parse_mode="HTML")
+        context.user_data["awaiting_input"] = "event_date"
+
+    elif query.data == "set_venue":
+        await query.edit_message_text("📍 Send me the new venue name:", parse_mode="HTML")
+        context.user_data["awaiting_input"] = "venue"
+
+    elif query.data == "set_max_players":
+        await query.edit_message_text("👥 Send the new max number of players (e.g., 18):", parse_mode="HTML")
+        context.user_data["awaiting_input"] = "max_players"
+
+    elif query.data == "back_to_main":
+        await query.edit_message_text(
+            get_team_message(),
+            reply_markup=generate_buttons(user_id, username),
+            parse_mode="HTML"
+        )
     else:
         response = "Unknown action."
 
