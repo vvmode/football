@@ -70,8 +70,26 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         team_members.pop(user_id, None)
     # "team" just refreshes the view
 
-    message = get_team_message()
-    buttons = generate_buttons(user_id)
+    if query.data == "team" or query.data in ("add", "remove"):
+        if team_members:
+            members = "\n".join(f"• @{u}" for u in team_members.values())
+            text = f"👥 <b>Current Team Members</b>:\n{members}"
+        else:
+            text = "👥 <b>The team is currently empty.</b>"
+
+        # Set the correct action button depending on user's presence
+        if user_id in team_members:
+            buttons = [
+                InlineKeyboardButton("➖ Remove Me", callback_data="remove"),
+                InlineKeyboardButton("👥 Show Team", callback_data="team"),
+            ]
+        else:
+            buttons = [
+                InlineKeyboardButton("➕ Add Me", callback_data="add"),
+                InlineKeyboardButton("👥 Show Team", callback_data="team"),
+            ]
+
+        markup = InlineKeyboardMarkup([buttons])
 
     await query.edit_message_text(message, reply_markup=buttons, parse_mode="HTML")
 
