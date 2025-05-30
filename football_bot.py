@@ -55,7 +55,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.effective_user.id
     message = get_team_message()
     buttons = generate_buttons(user_id)
-    await update.message.reply_text(message, reply_markup=buttons, parse_mode="HTML")
+    await query.edit_message_text(text, reply_markup=buttons, parse_mode="HTML")
 
 async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
