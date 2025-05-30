@@ -84,7 +84,7 @@ def get_team_message():
     return "👥 <b>The team is currently empty.</b>"
 
 def generate_buttons(user_id, username):
-    is_admin = manager.is_admin(user_id=user_id, username=username)
+    is_admin = team_manager.is_admin(user_id=user_id, username=username)
     buttons = []
 
     if user_id in team_members:
