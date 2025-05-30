@@ -1,3 +1,3 @@
-python-telegram-bot[webhooks]
-Flask
+Flask>=2.0
 python-dotenv
+python-telegram-bot[webhooks]>=20.0
