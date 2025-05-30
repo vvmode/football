@@ -26,7 +26,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 team_manager = TeamManager()  # create TeamManager instance
-
+team_members = {}
 # === Telegram bot application ===
 telegram_app = Application.builder().token(TELEGRAM_TOKEN).build()
 
