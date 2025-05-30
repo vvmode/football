@@ -35,13 +35,16 @@ def home():
 
 @flask_app.route("/webhook", methods=["POST"])
 def webhook():
+    logger.info("Webhook route enetered")
     update = Update.de_json(request.get_json(force=True), telegram_app.bot)
+    logger.info("Webhook route entered with update: %s", update)
     telegram_app.update_queue.put_nowait(update)
     return "OK", 200
 
 
 # === Helper functions ===
 def get_team_message():
+    logger.info("Get Message enetered")
     if team_members:
         members = "\n".join(f"• @{u}" for u in team_members.values())
         return f"👥 <b>Current Team Members</b>:\n{members}"
@@ -49,6 +52,7 @@ def get_team_message():
 
 
 def generate_buttons(user_id):
+    logger.info("Generate button enetered")
     if user_id in team_members:
         return InlineKeyboardMarkup([
             [InlineKeyboardButton("➖ Remove Me", callback_data="remove")],
@@ -63,11 +67,13 @@ def generate_buttons(user_id):
 
 # === Telegram Bot Handlers ===
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    logger.info("Start Cleed enetered")
     user_id = update.effective_user.id
     await update.message.reply_html(get_team_message(), reply_markup=generate_buttons(user_id))
 
 
 async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    logger.info("Handle button called")
     query = update.callback_query
     await query.answer()
 
@@ -86,6 +92,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
 
 def main():
+    logger.info("Main called called")
     telegram_app.add_handler(CommandHandler("start", start))
     telegram_app.add_handler(CallbackQueryHandler(handle_button))
 
