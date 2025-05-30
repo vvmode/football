@@ -29,7 +29,7 @@ telegram_app = Application.builder().token(TOKEN).build()
 
 @flask_app.route("/")
 def home():
-      logger.info("Health check received at '/' route.")
+    logger.info("Health check received at '/' route.")
     return "✅ Bot is alive!", 200
 
 
