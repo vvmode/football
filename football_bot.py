@@ -25,6 +25,9 @@ telegram_app = Application.builder().token(TOKEN).build()
 def home():
     return "Bot is alive!", 200
 
+def start_flask():
+    flask_app.run(host="0.0.0.0", port=5001, debug=False, use_reloader=False)
+    
 @flask_app.route("/webhook", methods=["POST"])
 def webhook():
     update = Update.de_json(request.get_json(force=True), telegram_app.bot)
