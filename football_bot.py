@@ -54,33 +54,32 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
     user_id = query.from_user.id
     username = query.from_user.username or "anonymous"
+    action = query.data
 
-    if query.data == "add":
+    if action == "add":
         team_members[user_id] = username
-
-    elif query.data == "remove":
+    elif action == "remove":
         team_members.pop(user_id, None)
-
-    if query.data == "back":
+    elif action == "back":
         await query.edit_message_text("Choose an action:", reply_markup=generate_menu(user_id))
         return
 
-    if query.data == "team":
-        if team_members:
-            members = "\n".join(f"• @{u}" for u in team_members.values())
-            text = f"👥 <b>Current Team Members</b>:\n{members}"
-        else:
-            text = "👥 <b>The team is currently empty.</b>"
+    # Show team (after add/remove/team actions)
+    if team_members:
+        members = "\n".join(f"• @{u}" for u in team_members.values())
+        text = f"👥 <b>Current Team Members</b>:\n{members}"
+    else:
+        text = "👥 <b>The team is currently empty.</b>"
 
-        action = InlineKeyboardButton("➖ Remove Me", callback_data="remove") if user_id in team_members \
+    new_action = InlineKeyboardButton("➖ Remove Me", callback_data="remove") if user_id in team_members \
                  else InlineKeyboardButton("➕ Add Me", callback_data="add")
 
-        markup = InlineKeyboardMarkup([
-            [action],
-            [InlineKeyboardButton("⬅️ Back", callback_data="back")]
-        ])
+    markup = InlineKeyboardMarkup([
+        [new_action],
+        [InlineKeyboardButton("⬅️ Back", callback_data="back")]
+    ])
 
-        await query.edit_message_text(text, reply_markup=markup, parse_mode="HTML")
+    await query.edit_message_text(text, reply_markup=markup, parse_mode="HTML")
 
 # === Main Setup ===
 def main():
