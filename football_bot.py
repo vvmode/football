@@ -178,7 +178,8 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = user.id
     username = user.username or "anonymous"
     full_name = f"{user.first_name} {user.last_name}".strip() if user.last_name else user.first_name
-
+    response = ""
+    buttons = None
     if query.data == "add":
         response = team_manager.join_team(user_id, full_name, username)
     elif query.data == "remove":
