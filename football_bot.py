@@ -63,7 +63,7 @@ async def telegram_webhook(request: Request):
 # === Telegram Bot Handlers ===
 def get_team_message():
     if team_members:
-        members = "\n".join(f"• @{u}" for u in team_members.values())
+        members = "\n".join(f"• @{u} (telegram)" for u in team_members.values())
         return f"👥 <b>Current Team Members</b>:\n{members}"
     return "👥 <b>The team is currently empty.</b>"
 
