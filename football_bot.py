@@ -86,14 +86,14 @@ def generate_buttons(user_id, username):
     is_admin = team_manager.is_admin(user_id=user_id, username=username)
     buttons = []
 
-    if user_id in team_manager.main_team:
+    if in_main_team:
         buttons.append([InlineKeyboardButton("➖ Remove Me", callback_data="remove")])
     else:
         buttons.append([InlineKeyboardButton("➕ Add Me", callback_data="add")])
 
     buttons.append([InlineKeyboardButton("👥 Show Team", callback_data="team")])
 
-    if team_manager.is_admin(user_id=user_id, username=username):
+    if is_admin:
         buttons.append([InlineKeyboardButton("⚙️ Settings", callback_data="settings")])
 
     return InlineKeyboardMarkup(buttons)
@@ -177,37 +177,45 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = user.id
     username = user.username or "anonymous"
     full_name = f"{user.first_name} {user.last_name}".strip() if user.last_name else user.first_name
-    response = ""
-    buttons = None
+
     if query.data == "add":
-        team_manager.join_team(user_id, full_name, username)
-        response = get_team_message()
+        response = team_manager.join_team(user_id, full_name, username)
         buttons = generate_buttons(user_id, username)
+        await query.edit_message_text(get_team_message(), reply_markup=buttons, parse_mode="HTML")
+        return
+
     elif query.data == "remove":
-        team_manager.leave_team(user_id)
-        response = get_team_message()
+        response = team_manager.leave_team(user_id)
         buttons = generate_buttons(user_id, username)
+        await query.edit_message_text(get_team_message(), reply_markup=buttons, parse_mode="HTML")
+        return
+
     elif query.data == "team":
-        response = get_team_message()
-        buttons = generate_buttons(user_id, username)
+        await query.edit_message_text(get_team_message(), reply_markup=generate_buttons(user_id, username), parse_mode="HTML")
+        return
+
     elif query.data == "settings":
         await query.edit_message_text(
             "⚙️ <b>Event Settings</b>\nChoose what you want to configure:",
             reply_markup=generate_settings_buttons(),
             parse_mode="HTML"
         )
+        return
 
     elif query.data == "set_date":
         await query.edit_message_text("📅 Send me the new event date (e.g., 2025-06-01):", parse_mode="HTML")
         context.user_data["awaiting_input"] = "event_date"
+        return
 
     elif query.data == "set_venue":
         await query.edit_message_text("📍 Send me the new venue name:", parse_mode="HTML")
         context.user_data["awaiting_input"] = "venue"
+        return
 
-    elif query.data == "set_max_players":
+    elif query.data == "set_max":
         await query.edit_message_text("👥 Send the new max number of players (e.g., 18):", parse_mode="HTML")
         context.user_data["awaiting_input"] = "max_players"
+        return
 
     elif query.data == "clear_team":
         if team_manager.is_admin(user_id=user_id, username=username):
@@ -221,15 +229,17 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             await query.answer("⛔ You are not authorized.", show_alert=True)
         return
+
     elif query.data == "back_to_main":
-        response = get_team_message()
-        buttons = generate_buttons(user_id, username)
-    else:
-        response = "Unknown action."
-        buttons = generate_buttons(user_id, username)
-        
-    if response:
-        await query.edit_message_text(response, reply_markup=buttons, parse_mode="HTML")
+        await query.edit_message_text(
+            get_team_message(),
+            reply_markup=generate_buttons(user_id, username),
+            parse_mode="HTML"
+        )
+        return
+
+    # Unknown action fallback
+    await query.edit_message_text("❌ Unknown action.", parse_mode="HTML")
 
 
 # === Uvicorn entrypoint ===
