@@ -38,7 +38,7 @@ def webhook():
     logger.info("Webhook route enetered")
     update = Update.de_json(request.get_json(force=True), telegram_app.bot)
     logger.info("Webhook route entered with update: %s", update)
-    telegram_app.update_queue.put_nowait(update)
+    telegram_app.create_task(telegram_app.process_update(update))
     return "OK", 200
 
 
