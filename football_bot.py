@@ -26,7 +26,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 team_manager = TeamManager()  # create TeamManager instance
-team_members = {}
 # === Telegram bot application ===
 telegram_app = Application.builder().token(TELEGRAM_TOKEN).build()
 
@@ -208,6 +207,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == "clear_team":
         if team_manager.is_admin(user_id=user_id, username=username):
             team_members.clear()
+            team_manager.reserve_team.clear()
             await query.edit_message_text(
                 "🧹 <b>Team lists have been cleared.</b>",
                 reply_markup=generate_settings_buttons(),
