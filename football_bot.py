@@ -91,7 +91,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
         markup = InlineKeyboardMarkup([buttons])
 
-   await query.edit_message_text(text, reply_markup=markup, parse_mode="HTML")
+        await query.edit_message_text(text, reply_markup=markup, parse_mode="HTML")
 
 # === Main Setup ===
 def main():
