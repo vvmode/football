@@ -88,7 +88,7 @@ def main():
     telegram_app.bot.set_webhook(url=f"{WEBHOOK_URL}/webhook")
 
     # Start Flask app
-    flask_app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000))
+    flask_app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
 
 if __name__ == "__main__":
     main()
