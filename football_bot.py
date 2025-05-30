@@ -60,24 +60,19 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         team_members[user_id] = username
     elif action == "remove":
         team_members.pop(user_id, None)
-    elif action == "back":
-        await query.edit_message_text("Choose an action:", reply_markup=generate_menu(user_id))
-        return
 
-    # Show team (after add/remove/team actions)
+    # Prepare updated team list
     if team_members:
         members = "\n".join(f"• @{u}" for u in team_members.values())
         text = f"👥 <b>Current Team Members</b>:\n{members}"
     else:
         text = "👥 <b>The team is currently empty.</b>"
 
-    new_action = InlineKeyboardButton("➖ Remove Me", callback_data="remove") if user_id in team_members \
-                 else InlineKeyboardButton("➕ Add Me", callback_data="add")
+    # Only one button (Add or Remove)
+    next_action = InlineKeyboardButton("➖ Remove Me", callback_data="remove") if user_id in team_members \
+                  else InlineKeyboardButton("➕ Add Me", callback_data="add")
 
-    markup = InlineKeyboardMarkup([
-        [new_action],
-        [InlineKeyboardButton("⬅️ Back", callback_data="back")]
-    ])
+    markup = InlineKeyboardMarkup([[next_action]])
 
     await query.edit_message_text(text, reply_markup=markup, parse_mode="HTML")
 
