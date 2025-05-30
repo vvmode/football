@@ -31,22 +31,31 @@ def webhook():
     telegram_app.update_queue.put_nowait(update)
     return "OK", 200
 
-# === Telegram Bot Logic ===
-def generate_menu(user_id):
+# === Helper to generate team list and buttons ===
+def get_team_message():
+    if team_members:
+        members = "\n".join(f"• @{u}" for u in team_members.values())
+        return f"👥 <b>Current Team Members</b>:\n{members}"
+    return "👥 <b>The team is currently empty.</b>"
+
+def generate_buttons(user_id):
     if user_id in team_members:
         return InlineKeyboardMarkup([
             [InlineKeyboardButton("➖ Remove Me", callback_data="remove")],
-            [InlineKeyboardButton("👥 Show Team", callback_data="team")],
+            [InlineKeyboardButton("👥 Show Team", callback_data="team")]
         ])
     else:
         return InlineKeyboardMarkup([
             [InlineKeyboardButton("➕ Add Me", callback_data="add")],
-            [InlineKeyboardButton("👥 Show Team", callback_data="team")],
+            [InlineKeyboardButton("👥 Show Team", callback_data="team")]
         ])
 
+# === Telegram Bot Handlers ===
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    reply_markup = generate_menu(update.effective_user.id)
-    await update.message.reply_text("Choose an action:", reply_markup=reply_markup)
+    user_id = update.effective_user.id
+    message = get_team_message()
+    buttons = generate_buttons(user_id)
+    await update.message.reply_text(message, reply_markup=buttons, parse_mode="HTML")
 
 async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
@@ -54,42 +63,26 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
     user_id = query.from_user.id
     username = query.from_user.username or "anonymous"
-    action = query.data
 
-    if action == "add":
+    if query.data == "add":
         team_members[user_id] = username
-    elif action == "remove":
+    elif query.data == "remove":
         team_members.pop(user_id, None)
+    # "team" just refreshes the view
 
-    # Prepare updated team list
-    if team_members:
-        members = "\n".join(f"• @{u}" for u in team_members.values())
-        text = f"👥 <b>Current Team Members</b>:\n{members}"
-    else:
-        text = "👥 <b>The team is currently empty.</b>"
+    message = get_team_message()
+    buttons = generate_buttons(user_id)
 
-    # Buttons: Add or Remove, plus Show Team
-    main_action = InlineKeyboardButton("➖ Remove Me", callback_data="remove") if user_id in team_members \
-                  else InlineKeyboardButton("➕ Add Me", callback_data="add")
-
-    markup = InlineKeyboardMarkup([
-        [main_action],
-        [InlineKeyboardButton("👥 Show Team", callback_data="team")]
-    ])
-
-    await query.edit_message_text(text, reply_markup=markup, parse_mode="HTML")
+    await query.edit_message_text(message, reply_markup=buttons, parse_mode="HTML")
 
 # === Main Setup ===
 def main():
-    # Register handlers
     telegram_app.add_handler(CommandHandler("start", start))
     telegram_app.add_handler(CallbackQueryHandler(handle_button))
 
-    # Start Flask in background thread
     threading.Thread(target=lambda: flask_app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))).start()
 
-    # Start polling so application.update_queue works
-    telegram_app.run_polling()
+    telegram_app.run_polling()  # required to process webhook updates
 
 if __name__ == "__main__":
     main()
