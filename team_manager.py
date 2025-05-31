@@ -3,7 +3,7 @@ from typing import List, Set, Tuple
 class TeamManager:
     def __init__(self):
         self.super_admin_id = None
-        self.super_admin_usernames: Set[str] = {"vvmode", "Xellision"}  # Hardcoded super admins
+        self.super_admin_username = "vmode" 
         self.admin_ids: Set[int] = set()
         self.main_team: List[Tuple[int, str, str]] = []
         self.reserve_team: List[Tuple[int, str, str]] = []
@@ -11,18 +11,9 @@ class TeamManager:
         self.venue: str = "Not Set"
         self.event_date: str = "Not Set"
 
-    def add_super_admin(self, user_id: int = None, username: str = None):
-        if user_id is not None:
-            self.super_admin_ids.add(user_id)
-            self.admin_ids.add(user_id)
-        if username is not None:
-            self.super_admin_usernames.add(username)
-
-    def remove_super_admin(self, user_id: int = None, username: str = None):
-        if user_id is not None:
-            self.super_admin_ids.discard(user_id)
-        if username is not None and username not in {"vvmode", "Xellision"}:
-            self.super_admin_usernames.discard(username)
+    def set_super_admin(self, user_id: int):
+        self.super_admin_id = user_id
+        self.admin_ids.add(user_id)
 
     def remove_admin(self, user_id: int):
         if user_id != self.super_admin_id:
