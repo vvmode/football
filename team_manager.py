@@ -3,7 +3,7 @@ from typing import List, Set, Tuple
 class TeamManager:
     def __init__(self):
         self.super_admin_id = None
-        self.super_admin_username = "vmode" 
+        self.super_admin_username = "vvmode" 
         self.admin_ids: Set[int] = set()
         self.main_team: List[Tuple[int, str, str]] = []
         self.reserve_team: List[Tuple[int, str, str]] = []
@@ -17,6 +17,14 @@ class TeamManager:
 
     def remove_admin(self, user_id: int):
         if user_id != self.super_admin_id:
+            self.admin_ids.discard(user_id)
+
+    def add_admin(self, user_id: int):
+        self.admin_ids.add(user_id)
+
+    def remove_admin(self, user_id: int):
+        # Prevent removal if user is a super admin
+        if user_id not in self.super_admin_ids:
             self.admin_ids.discard(user_id)
 
     def is_admin(self, user_id: int = None, username: str = None) -> bool:
