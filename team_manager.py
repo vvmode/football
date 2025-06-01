@@ -3,7 +3,7 @@ from typing import List, Set, Tuple
 class TeamManager:
     def __init__(self):
         self.super_admin_ids: Set[int] = set()
-        self.super_admin_usernames: Set[str] = {"Xellision", "vvmode"}
+        self.super_admin_usernames: Set[str] = {"Xellision"}
         self.admin_usernames: Set[str] = set()
         self.admin_ids: Set[int] = set()
         self.main_team: List[Tuple[int, str, str]] = []
