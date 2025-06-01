@@ -174,11 +174,24 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"✅ Venue set to: {value}")
     elif field == "max_players":
         try:
-            team_manager.max_players = int(value)
-            await update.message.reply_text(f"✅ Max players set to: {value}")
+            new_max = int(value)
+            current_players = len(team_manager.players)
+
+            if new_max < current_players:
+                await update.message.reply_text(
+                    f"❌ Max players cannot be less than the current number of players ({current_players})."
+                )
+            else:
+                team_manager.max_players = new_max
+                await update.message.reply_text(f"✅ Max players set to: {new_max}")
         except ValueError:
             await update.message.reply_text("❌ Please enter a valid number.")
 
+        # Always refresh the team list after processing input
+        await update.message.reply_html(
+            get_team_message(),
+            reply_markup=generate_buttons(update.effective_user.id, update.effective_user.username)
+        )
     elif field == "add_admin":
         username = value.strip().lstrip('@')
         if team_manager.add_admin(username):
