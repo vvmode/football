@@ -43,7 +43,7 @@ class TeamManager:
             cursor.execute("SELECT username FROM admin_users")
             rows = cursor.fetchall()
 
-            for username in rows:
+            for (username,) in rows:
                 
                 if username:
                     print(username)
