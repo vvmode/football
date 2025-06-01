@@ -53,39 +53,38 @@ class TeamManager:
         except Exception as e:
             print(f"❌ Failed to load admin users: {e}")
 
+    def store_admin_user_to_db(self username: str):
+        try:
+            conn = psycopg2.connect(
+                dbname=os.getenv("DB_NAME"),
+                user=os.getenv("DB_USER"),
+                password=os.getenv("DB_PASSWORD"),
+                host=os.getenv("DB_HOST"),
+                port=os.getenv("DB_PORT"),
+                sslmode="require"
+            )
+            cursor = conn.cursor()
 
-    def store_admin_user_to_db(self, user_id: int, full_name: str, username: str):
-    try:
-        conn = psycopg2.connect(
-            dbname=os.getenv("DB_NAME"),
-            user=os.getenv("DB_USER"),
-            password=os.getenv("DB_PASSWORD"),
-            host=os.getenv("DB_HOST"),
-            port=os.getenv("DB_PORT"),
-            sslmode="require"
-        )
-        cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO admin_users (username)
+                VALUES (%s)
+                ON CONFLICT (username) DO UPDATE
+                SET username = EXCLUDED.username
+            """, (username))
 
-        cursor.execute("""
-            INSERT INTO admin_users (user_id, full_name, username)
-            VALUES (%s, %s, %s)
-            ON CONFLICT (user_id) DO UPDATE
-            SET full_name = EXCLUDED.full_name,
-                username = EXCLUDED.username
-        """, (user_id, full_name, username))
-
-        conn.commit()
-        cursor.close()
-        conn.close()
+            conn.commit()
+            cursor.close()
+            conn.close()
 
         # Add to in-memory sets as well
-        self.admin_ids.add(user_id)
-        if username:
-            self.admin_usernames.add(username)
+            if username:
+                self.admin_usernames.add(username)
 
-        print(f"✅ Admin user {username} (ID: {user_id}) stored successfully.")
-    except Exception as e:
-        print(f"❌ Failed to store admin user: {e}")
+            print(f"✅ Admin user {username} stored successfully.")
+        except Exception as e:
+            print(f"❌ Failed to store admin user: {e}")
+
+
         
     def is_admin(self, username: str = None) -> bool:
         return (username is not None and username in self.admin_usernames
