@@ -22,13 +22,25 @@ class TeamManager:
         if username:
             self.super_admin_usernames.add(username)
         self.admin_ids.add(user_id)
-        
 
-    def remove_admin(self, user_id: int):
-        # Prevent removal if user is a super admin
-        if user_id not in self.super_admin_ids:
-            self.admin_ids.discard(user_id)
-    
+    def get_admins(self) -> List[str]:
+        """Returns a list of all admin usernames (excluding super admins)."""
+        return sorted(self.admin_usernames)
+
+    def add_admin(self, username: str) -> bool:
+        username = username.strip().lstrip('@')
+        if username and username not in self.super_admin_usernames:
+            self.admin_usernames.add(username)
+            return True
+        return False
+
+    def remove_admin(self, username: str) -> bool:
+        username = username.strip().lstrip('@')
+        if username in self.admin_usernames:
+            self.admin_usernames.remove(username)
+            return True
+        return False
+        
     def load_admin_users_from_db(self):
         try:
             conn = psycopg2.connect(
