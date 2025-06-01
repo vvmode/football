@@ -43,8 +43,8 @@ class TeamManager:
             cursor.execute("SELECT username FROM admin_users")
             rows = cursor.fetchall()
 
-            for user_id, username in rows:
-              
+            for username in rows:
+                
                 if username:
                     self.admin_usernames.add(username)
 
@@ -87,6 +87,7 @@ class TeamManager:
 
         
     def is_admin(self, username: str = None) -> bool:
+        print("Is Admin Called ")
         return (username is not None and username in self.admin_usernames
         )
 
