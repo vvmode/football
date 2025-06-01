@@ -47,7 +47,7 @@ class TeamManager:
                 
                 if username:
                     print(username)
-                    print("User name called)
+                    print("User name called")
                     self.admin_usernames.add(username)
 
             cursor.close()
