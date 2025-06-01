@@ -133,10 +133,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 async def set_event(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
+    username = update.effective_user.username
 
     # For demo: allow only super admin (or all admins) to set event details
-    if not team_manager.is_admin(user_id):
+    if not team_manager.is_admin(username):
         await update.message.reply_text("❌ You don't have permission to set the event.")
         return
 
@@ -240,7 +240,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     elif query.data == "clear_team":
-        if team_manager.is_admin(user_id=user_id, username=username):
+        if team_manager.is_admin(username=username):
             team_manager.main_team.clear()
             team_manager.reserve_team.clear()
             await query.edit_message_text(
