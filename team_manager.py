@@ -1,4 +1,7 @@
+import os
+import psycopg2
 from typing import List, Set, Tuple
+from dotenv import load_dotenv
 
 class TeamManager:
     def __init__(self):
