@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 class TeamManager:
     def __init__(self):
         self.super_admin_ids: Set[int] = set()
-        self.super_admin_usernames: Set[str] = {"Xellision"}
+        self.super_admin_usernames: Set[str] = {"vvmode"}
         self.admin_usernames: Set[str] = set()
        
         self.main_team: List[Tuple[int, str, str]] = []
