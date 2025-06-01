@@ -2,8 +2,8 @@ from typing import List, Set, Tuple
 
 class TeamManager:
     def __init__(self):
-        self.super_admin_id = None
-        self.super_admin_username = "Xellision" 
+        self.super_admin_ids: Set[int] = set()
+        self.super_admin_usernames: Set[str] = {"Xellision", "vvmode"}
         self.admin_ids: Set[int] = set()
         self.main_team: List[Tuple[int, str, str]] = []
         self.reserve_team: List[Tuple[int, str, str]] = []
@@ -11,13 +11,11 @@ class TeamManager:
         self.venue: str = "Not Set"
         self.event_date: str = "Not Set"
 
-    def set_super_admin(self, user_id: int):
-        self.super_admin_id = user_id
+    def set_super_admin(self, user_id: int, username: str = None):
+        self.super_admin_ids.add(user_id)
+        if username:
+            self.super_admin_usernames.add(username)
         self.admin_ids.add(user_id)
-
-    def remove_admin(self, user_id: int):
-        if user_id != self.super_admin_id:
-            self.admin_ids.discard(user_id)
 
     def add_admin(self, user_id: int):
         self.admin_ids.add(user_id)
@@ -30,13 +28,13 @@ class TeamManager:
     def is_admin(self, user_id: int = None, username: str = None) -> bool:
         return (
             (user_id is not None and user_id in self.admin_ids)
-            or (username is not None and username == self.super_admin_username)
+            or (username is not None and username in self.super_admin_usernames)
         )
 
     def is_super_admin(self, user_id: int = None, username: str = None) -> bool:
         return (
-            (user_id is not None and user_id == self.super_admin_id)
-            or (username is not None and username == self.super_admin_username)
+            (user_id is not None and user_id in self.super_admin_ids)
+            or (username is not None and username in self.super_admin_usernames)
         )
 
     def set_event_details(self, max_players: int, venue: str, event_date: str):
