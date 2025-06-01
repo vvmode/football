@@ -175,7 +175,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif field == "max_players":
         try:
             new_max = int(value)
-            current_players = len(team_manager.players)
+            current_players = len(team_manager.main_team)
 
             if new_max < current_players:
                 await update.message.reply_text(
