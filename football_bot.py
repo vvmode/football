@@ -283,20 +283,21 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.answer(f"❌ Failed to remove @{username_to_remove}.")
     
     # Refresh the admin list
-        admins = team_manager.get_admins()
+        admins = team_manager.get_admins()  # Should return list of (user_id, username)
         if not admins:
             await query.edit_message_text("❌ No admins found.", parse_mode="HTML")
         else:
-            buttons = []
-            for uname in admins:
-                buttons.append([InlineKeyboardButton(f"🗑 Remove @{uname}", callback_data=f"remove_admin:{uname}")])
+            buttons = [
+                [InlineKeyboardButton(f"🗑 Remove @{uname}", callback_data=f"remove_admin:{uname}")]
+                for uname in admins
+            ]
             buttons.append([InlineKeyboardButton("🔙 Back", callback_data="settings")])
-        
             await query.edit_message_text(
                 "📋 <b>Admin List</b>",
                 reply_markup=InlineKeyboardMarkup(buttons),
                 parse_mode="HTML"
             )
+        return
         
     elif query.data == "back_to_main":
         await query.edit_message_text(
