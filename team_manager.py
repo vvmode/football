@@ -100,26 +100,26 @@ class TeamManager:
             print(f"❌ Failed to store admin user: {e}")
 
     def remove_admin_from_db(self, username: str):
-    try:
-        conn = psycopg2.connect(
-            dbname=os.getenv("DB_NAME"),
-            user=os.getenv("DB_USER"),
-            password=os.getenv("DB_PASSWORD"),
-            host=os.getenv("DB_HOST"),
-            port=os.getenv("DB_PORT"),
-            sslmode="require"
-        )
-        cursor = conn.cursor()
+        try:
+            conn = psycopg2.connect(
+                dbname=os.getenv("DB_NAME"),
+                user=os.getenv("DB_USER"),
+                password=os.getenv("DB_PASSWORD"),
+                host=os.getenv("DB_HOST"),
+                port=os.getenv("DB_PORT"),
+                sslmode="require"
+            )
+            cursor = conn.cursor()
 
-        cursor.execute("DELETE FROM admin_users WHERE username = %s", (username,))
-        conn.commit()
-        cursor.close()
-        conn.close()
+            cursor.execute("DELETE FROM admin_users WHERE username = %s", (username,))
+            conn.commit()
+            cursor.close()
+            conn.close()
 
-        print(f"🗑 Admin user {username} removed from database.")
+            print(f"🗑 Admin user {username} removed from database.")
 
-    except Exception as e:
-        print(f"❌ Failed to remove admin user from DB: {e}")
+        except Exception as e:
+            print(f"❌ Failed to remove admin user from DB: {e}")
         
         
     def is_admin(self, username: str = None) -> bool:
