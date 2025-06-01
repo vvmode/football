@@ -106,14 +106,20 @@ def generate_buttons(user_id, username):
         
     return InlineKeyboardMarkup(buttons)
 
-def generate_settings_buttons():
-    return InlineKeyboardMarkup([
+def generate_settings_buttons(is_super_admin=False):
+    buttons = [
         [InlineKeyboardButton("📅 Set Date", callback_data="set_date")],
         [InlineKeyboardButton("📍 Set Venue", callback_data="set_venue")],
         [InlineKeyboardButton("👥 Set Max Team Size", callback_data="set_max")],
         [InlineKeyboardButton("🧹 Clear Team Lists", callback_data="clear_team")],
-        [InlineKeyboardButton("🔙 Back", callback_data="back_to_main")]
-    ])
+    ]
+
+    if is_super_admin:
+        buttons.append([InlineKeyboardButton("➕ Add Admin", callback_data="add_admin")])
+        buttons.append([InlineKeyboardButton("📋 List Admins", callback_data="list_admins")])
+
+    buttons.append([InlineKeyboardButton("🔙 Back", callback_data="back_to_main")])
+    return InlineKeyboardMarkup(buttons)
     
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
@@ -173,6 +179,13 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except ValueError:
             await update.message.reply_text("❌ Please enter a valid number.")
 
+    elif field == "add_admin":
+        username = value.strip().lstrip('@')
+        if team_manager.add_admin(username):
+            await update.message.reply_text(f"✅ @{username} has been added as an admin.")
+        else:
+            await update.message.reply_text("❌ Failed to add admin. Make sure the username is valid.")
+            
     await update.message.reply_html(
         get_team_message(),
         reply_markup=generate_buttons(update.effective_user.id, update.effective_user.username)
@@ -203,9 +216,10 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     elif query.data == "settings":
+        is_super_admin = team_manager.is_super_admin(user_id=user_id, username=username)
         await query.edit_message_text(
             "⚙️ <b>Event Settings</b>\nChoose what you want to configure:",
-            reply_markup=generate_settings_buttons(),
+            reply_markup=generate_settings_buttons(is_super_admin=is_super_admin),
             parse_mode="HTML"
         )
         return
@@ -238,6 +252,37 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.answer("⛔ You are not authorized.", show_alert=True)
         return
 
+    elif query.data == "add_admin":
+        await query.edit_message_text("👤 Send the @username of the user to add as admin:", parse_mode="HTML")
+        context.user_data["awaiting_input"] = "add_admin"
+        return
+
+    elif query.data == "list_admins":
+        admins = team_manager.get_admins()  # Should return list of (user_id, username)
+        if not admins:
+            await query.edit_message_text("❌ No admins found.", parse_mode="HTML")
+        else:
+            buttons = []
+            for uid, uname in admins:
+                buttons.append([InlineKeyboardButton(f"🗑 Remove @{uname}", callback_data=f"remove_admin:{uid}")])
+            buttons.append([InlineKeyboardButton("🔙 Back", callback_data="settings")])
+
+            await query.edit_message_text(
+                "📋 <b>Admin List</b>",
+                reply_markup=InlineKeyboardMarkup(buttons),
+                parse_mode="HTML"
+            )
+        return
+
+    elif query.data.startswith("remove_admin:"):
+        if not team_manager.is_super_admin(user_id, username):
+            await query.answer("⛔ Only super admins can remove admins.", show_alert=True)
+            return
+        admin_id_to_remove = int(query.data.split(":")[1])
+        team_manager.remove_admin(admin_id_to_remove)
+        await query.edit_message_text("✅ Admin removed successfully.", parse_mode="HTML")
+        return
+        
     elif query.data == "back_to_main":
         await query.edit_message_text(
             get_team_message(),
