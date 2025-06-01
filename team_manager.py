@@ -22,7 +22,7 @@ class TeamManager:
         if username:
             self.super_admin_usernames.add(username)
         self.admin_ids.add(user_id)
-a
+        
     def add_admin(self, user_id: int):
         self.admin_ids.add(user_id)
 
