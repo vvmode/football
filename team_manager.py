@@ -8,7 +8,7 @@ class TeamManager:
         self.super_admin_ids: Set[int] = set()
         self.super_admin_usernames: Set[str] = {"Xellision"}
         self.admin_usernames: Set[str] = set()
-        self.admin_ids: Set[int] = set()
+       
         self.main_team: List[Tuple[int, str, str]] = []
         self.reserve_team: List[Tuple[int, str, str]] = []
         self.max_players: int = 20
@@ -22,7 +22,7 @@ class TeamManager:
         if username:
             self.super_admin_usernames.add(username)
         self.admin_ids.add(user_id)
-
+a
     def add_admin(self, user_id: int):
         self.admin_ids.add(user_id)
 
@@ -42,11 +42,11 @@ class TeamManager:
                 sslmode="require"
             )
             cursor = conn.cursor()
-            cursor.execute("SELECT user_id, username FROM admin_users")
+            cursor.execute("SELECT username FROM admin_users")
             rows = cursor.fetchall()
 
             for user_id, username in rows:
-                self.admin_ids.add(user_id)
+              
                 if username:
                     self.admin_usernames.add(username)
 
@@ -54,10 +54,43 @@ class TeamManager:
             conn.close()
         except Exception as e:
             print(f"❌ Failed to load admin users: {e}")
-    def is_admin(self, user_id: int = None, username: str = None) -> bool:
-        return (
-            (user_id is not None and user_id in self.admin_ids)
-            or (username is not None and username in self.admin_usernames)
+
+
+    def store_admin_user_to_db(self, user_id: int, full_name: str, username: str):
+    try:
+        conn = psycopg2.connect(
+            dbname=os.getenv("DB_NAME"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            host=os.getenv("DB_HOST"),
+            port=os.getenv("DB_PORT"),
+            sslmode="require"
+        )
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            INSERT INTO admin_users (user_id, full_name, username)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (user_id) DO UPDATE
+            SET full_name = EXCLUDED.full_name,
+                username = EXCLUDED.username
+        """, (user_id, full_name, username))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        # Add to in-memory sets as well
+        self.admin_ids.add(user_id)
+        if username:
+            self.admin_usernames.add(username)
+
+        print(f"✅ Admin user {username} (ID: {user_id}) stored successfully.")
+    except Exception as e:
+        print(f"❌ Failed to store admin user: {e}")
+        
+    def is_admin(self, username: str = None) -> bool:
+        return (username is not None and username in self.admin_usernames
         )
 
     def is_super_admin(self, user_id: int = None, username: str = None) -> bool:
