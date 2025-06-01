@@ -240,7 +240,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     elif query.data == "clear_team":
-        if team_manager.is_admin(username=username):
+        if team_manager.is_admin(username=username) or team_manager.is_super_admin(username=username):
             team_manager.main_team.clear()
             team_manager.reserve_team.clear()
             await query.edit_message_text(
