@@ -84,6 +84,7 @@ def get_team_message():
 
 def generate_buttons(user_id, username):
     is_admin = team_manager.is_admin(user_id=user_id, username=username)
+    is_super_admin = team_manager.is_super_admin(user_id=user_id, username=username)
     in_main_team = any(member_id == user_id for member_id, _, _ in team_manager.main_team)
     
     buttons = []
@@ -98,6 +99,9 @@ def generate_buttons(user_id, username):
     if is_admin:
         buttons.append([InlineKeyboardButton("⚙️ Settings", callback_data="settings")])
 
+    if is_super_admin:
+        buttons.append([InlineKeyboardButton("⚙️ Settings", callback_data="settings")])
+        
     return InlineKeyboardMarkup(buttons)
 
 def generate_settings_buttons():
