@@ -23,8 +23,6 @@ class TeamManager:
             self.super_admin_usernames.add(username)
         self.admin_ids.add(user_id)
         
-    def add_admin(self, user_id: int):
-        self.admin_ids.add(user_id)
 
     def remove_admin(self, user_id: int):
         # Prevent removal if user is a super admin
