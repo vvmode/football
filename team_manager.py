@@ -57,7 +57,7 @@ class TeamManager:
     def is_admin(self, user_id: int = None, username: str = None) -> bool:
         return (
             (user_id is not None and user_id in self.admin_ids)
-            or (username is not None and username in self.super_admin_usernames)
+            or (username is not None and username in self.admin_usernames)
         )
 
     def is_super_admin(self, user_id: int = None, username: str = None) -> bool:
