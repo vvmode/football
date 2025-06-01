@@ -262,11 +262,11 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not admins:
             await query.edit_message_text("❌ No admins found.", parse_mode="HTML")
         else:
-            buttons = []
-            for uid, uname in admins:
-                buttons.append([InlineKeyboardButton(f"🗑 Remove @{uname}", callback_data=f"remove_admin:{uid}")])
+            buttons = [
+                [InlineKeyboardButton(f"🗑 Remove @{uname}", callback_data=f"remove_admin:{uname}")]
+                for uname in admins
+            ]
             buttons.append([InlineKeyboardButton("🔙 Back", callback_data="settings")])
-
             await query.edit_message_text(
                 "📋 <b>Admin List</b>",
                 reply_markup=InlineKeyboardMarkup(buttons),
