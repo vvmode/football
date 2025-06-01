@@ -53,7 +53,7 @@ class TeamManager:
         except Exception as e:
             print(f"❌ Failed to load admin users: {e}")
 
-    def store_admin_user_to_db(self username: str):
+    def store_admin_user_to_db(self, username: str):
         try:
             conn = psycopg2.connect(
                 dbname=os.getenv("DB_NAME"),
@@ -70,7 +70,7 @@ class TeamManager:
                 VALUES (%s)
                 ON CONFLICT (username) DO UPDATE
                 SET username = EXCLUDED.username
-            """, (username))
+            """, (username,))
 
             conn.commit()
             cursor.close()
