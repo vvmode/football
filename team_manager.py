@@ -11,7 +11,9 @@ class TeamManager:
         self.max_players: int = 20
         self.venue: str = "Not Set"
         self.event_date: str = "Not Set"
-
+       # Load admin users from DB
+        self.load_admin_users_from_db()
+        
     def set_super_admin(self, user_id: int, username: str = None):
         self.super_admin_ids.add(user_id)
         if username:
