@@ -4,6 +4,7 @@ class TeamManager:
     def __init__(self):
         self.super_admin_ids: Set[int] = set()
         self.super_admin_usernames: Set[str] = {"Xellision", "vvmode"}
+        self.admin_usernames: Set[str] = set()
         self.admin_ids: Set[int] = set()
         self.main_team: List[Tuple[int, str, str]] = []
         self.reserve_team: List[Tuple[int, str, str]] = []
@@ -24,7 +25,30 @@ class TeamManager:
         # Prevent removal if user is a super admin
         if user_id not in self.super_admin_ids:
             self.admin_ids.discard(user_id)
+    
+    def load_admin_users_from_db(self):
+        try:
+            conn = psycopg2.connect(
+                dbname=os.getenv("DB_NAME"),
+                user=os.getenv("DB_USER"),
+                password=os.getenv("DB_PASSWORD"),
+                host=os.getenv("DB_HOST"),
+                port=os.getenv("DB_PORT"),
+                sslmode="require"
+            )
+            cursor = conn.cursor()
+            cursor.execute("SELECT user_id, username FROM admin_users")
+            rows = cursor.fetchall()
 
+            for user_id, username in rows:
+                self.admin_ids.add(user_id)
+                if username:
+                    self.admin_usernames.add(username)
+
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print(f"❌ Failed to load admin users: {e}")
     def is_admin(self, user_id: int = None, username: str = None) -> bool:
         return (
             (user_id is not None and user_id in self.admin_ids)
