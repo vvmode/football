@@ -29,8 +29,8 @@ class TeamManager:
 
     def add_admin(self, username: str) -> bool:
         username = username.strip().lstrip('@')
-        if username and username not in self.super_admin_usernames:
-            self.admin_usernames.add(username)
+        if username and username not in self.super_admin_usernames and username not in self.admin_usernames:
+            self.store_admin_user_to_db(username)  # Store in DB and update in-memory set
             return True
         return False
 
