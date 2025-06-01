@@ -37,6 +37,7 @@ class TeamManager:
     def remove_admin(self, username: str) -> bool:
         username = username.strip().lstrip('@')
         if username in self.admin_usernames:
+            self.remove_admin_from_db(username)
             self.admin_usernames.remove(username)
             return True
         return False
@@ -98,7 +99,28 @@ class TeamManager:
         except Exception as e:
             print(f"❌ Failed to store admin user: {e}")
 
+    def remove_admin_from_db(self, username: str):
+    try:
+        conn = psycopg2.connect(
+            dbname=os.getenv("DB_NAME"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            host=os.getenv("DB_HOST"),
+            port=os.getenv("DB_PORT"),
+            sslmode="require"
+        )
+        cursor = conn.cursor()
 
+        cursor.execute("DELETE FROM admin_users WHERE username = %s", (username,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        print(f"🗑 Admin user {username} removed from database.")
+
+    except Exception as e:
+        print(f"❌ Failed to remove admin user from DB: {e}")
+        
         
     def is_admin(self, username: str = None) -> bool:
         print("Is Admin Called ")
